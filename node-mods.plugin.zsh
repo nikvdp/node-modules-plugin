@@ -24,12 +24,13 @@ npm_chpwd_hook() {
 # autoload if that is given, as are -z and -k.  (This is harmless if the
 # function is actually defined inline.)
 
+add-zsh-hook() {
 emulate -L zsh
 
 local -a hooktypes
 hooktypes=(
-  chpwd precmd preexec periodic zshaddhistory zshexit
-  zsh_directory_name
+chpwd precmd preexec periodic zshaddhistory zshexit
+zsh_directory_name
 )
 local usage="Usage: add-zsh-hook hook function\nValid hooks are:\n  $hooktypes"
 
@@ -38,70 +39,71 @@ local -a autoopts
 integer del list help
 
 while getopts "dDhLUzk" opt; do
-  case $opt in
-    (d)
-    del=1
-    ;;
+    case $opt in
+        (d)
+            del=1
+            ;;
 
-    (D)
-    del=2
-    ;;
+        (D)
+            del=2
+            ;;
 
-    (h)
-    help=1
-    ;;
+        (h)
+            help=1
+            ;;
 
-    (L)
-    list=1
-    ;;
+        (L)
+            list=1
+            ;;
 
-    ([Uzk])
-    autoopts+=(-$opt)
-    ;;
+        ([Uzk])
+            autoopts+=(-$opt)
+            ;;
 
-    (*)
-    return 1
-    ;;
-  esac
+        (*)
+            return 1
+            ;;
+    esac
 done
 shift $(( OPTIND - 1 ))
 
 if (( list )); then
-  typeset -mp "(${1:-${(@j:|:)hooktypes}})_functions"
-  return $?
+    typeset -mp "(${1:-${(@j:|:)hooktypes}})_functions"
+    return $?
 elif (( help || $# != 2 || ${hooktypes[(I)$1]} == 0 )); then
-  print -u$(( 2 - help )) $usage
-  return $(( 1 - help ))
+    print -u$(( 2 - help )) $usage
+    return $(( 1 - help ))
 fi
 
 local hook="${1}_functions"
 local fn="$2"
 
 if (( del )); then
-  # delete, if hook is set
-  if (( ${(P)+hook} )); then
-    if (( del == 2 )); then
-      set -A $hook ${(P)hook:#${~fn}}
-    else
-      set -A $hook ${(P)hook:#$fn}
+    # delete, if hook is set
+    if (( ${(P)+hook} )); then
+        if (( del == 2 )); then
+            set -A $hook ${(P)hook:#${~fn}}
+        else
+            set -A $hook ${(P)hook:#$fn}
+        fi
+        # unset if no remaining entries --- this can give better
+        # performance in some cases
+        if (( ! ${(P)#hook} )); then
+            unset $hook
+        fi
     fi
-    # unset if no remaining entries --- this can give better
-    # performance in some cases
-    if (( ! ${(P)#hook} )); then
-      unset $hook
-    fi
-  fi
 else
-  if (( ${(P)+hook} )); then
-    if (( ${${(P)hook}[(I)$fn]} == 0 )); then
-      typeset -ga $hook
-      set -A $hook ${(P)hook} $fn
+    if (( ${(P)+hook} )); then
+        if (( ${${(P)hook}[(I)$fn]} == 0 )); then
+            typeset -ga $hook
+            set -A $hook ${(P)hook} $fn
+        fi
+    else
+        typeset -ga $hook
+        set -A $hook $fn
     fi
-  else
-    typeset -ga $hook
-    set -A $hook $fn
-  fi
-  autoload $autoopts -- $fn
+    autoload $autoopts -- $fn
 fi
+}
 
 add-zsh-hook preexec npm_chpwd_hook
