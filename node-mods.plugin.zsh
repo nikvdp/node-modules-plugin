@@ -4,7 +4,7 @@ npm_chpwd_hook() {
         PATH=$PRENPMPATH
         unset PRENPMPATH
     fi
-    if [ -f package.json ]; then
+    if [ -f package.json ] || [ -d node_modules ]; then
         PRENPMPATH=$PATH
         PATH=$(npm bin):$PATH
     fi
@@ -106,4 +106,4 @@ else
 fi
 }
 
-add-zsh-hook preexec npm_chpwd_hook
+add-zsh-hook precmd npm_chpwd_hook
